@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle, Lightbulb, TrendingUp, Clock } from 'lucide-react';
+import { AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
 import { ScrollArea } from '@/app/components/ui/scroll-area';
 import type { SupervisorEvaluation } from '@/app/services/api';
 
@@ -125,74 +125,6 @@ export function SupervisorFeedback({ evaluation }: SupervisorFeedbackProps) {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Performance Indicators */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-violet-600" />
-              <h3 className="font-medium text-slate-900">表现指标</h3>
-            </div>
-
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-5 border border-violet-100">
-              <div className="space-y-4">
-                {/* Empathy */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-700">共情能力</span>
-                    <span className="text-sm font-semibold text-violet-900">{Math.round(currentFeedback.综合得分 / 5 * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-white rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${currentFeedback.综合得分 / 5 * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Active Listening */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-700">积极倾听</span>
-                    <span className="text-sm font-semibold text-violet-900">{Math.round(currentFeedback.综合得分 / 5 * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-white rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${currentFeedback.综合得分 / 5 * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Questioning Skills */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-700">提问技巧</span>
-                    <span className="text-sm font-semibold text-violet-900">{Math.round(currentFeedback.综合得分 / 5 * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-white rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${currentFeedback.综合得分 / 5 * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Rapport Building */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-700">关系建立</span>
-                    <span className="text-sm font-semibold text-violet-900">{Math.round(currentFeedback.综合得分 / 5 * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-white rounded-full h-2 overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${currentFeedback.综合得分 / 5 * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

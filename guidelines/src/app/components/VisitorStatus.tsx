@@ -101,11 +101,11 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* 情绪流变 Timeline */}
+        {/* 对话阶段 */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-blue-600" />
-            <h3 className="font-medium text-slate-900">情绪流变 (Timeline)</h3>
+            <h3 className="font-medium text-slate-900">对话阶段 (Timeline)</h3>
           </div>
           <div className="bg-slate-50 rounded-xl p-4">
             <ResponsiveContainer width="100%" height={120}>
@@ -117,24 +117,24 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis 
-                  dataKey="turn" 
+                <XAxis
+                  dataKey="turn"
                   tick={{ fontSize: 11, fill: '#64748b' }}
                   axisLine={{ stroke: '#cbd5e1' }}
                 />
-                <YAxis 
-                  domain={[1, 10]} 
+                <YAxis
+                  domain={[1, 10]}
                   ticks={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                   tick={{ fontSize: 11, fill: '#64748b' }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   label={{ value: '阶段', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#64748b' } }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#3b82f6" 
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#3b82f6"
                   strokeWidth={2}
-                  fill="url(#colorEmotion)" 
+                  fill="url(#colorEmotion)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -142,18 +142,18 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
           </div>
         </div>
 
-        {/* 对话阶段 */}
+        {/* 情绪流变 Timeline */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4 text-purple-600" />
-            <h3 className="font-medium text-slate-900">对话阶段 (Timeline)</h3>
+            <h3 className="font-medium text-slate-900">情绪流变 (Timeline)</h3>
           </div>
           <div className="bg-slate-50 rounded-xl p-4">
             {/* Legend */}
             <div className="flex flex-wrap gap-x-3 gap-y-2 mb-3">
               {currentStages.map((stage) => (
                 <div key={stage.name} className="flex items-center gap-1.5">
-                  <div 
+                  <div
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: stage.color }}
                   />
@@ -161,15 +161,15 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
                 </div>
               ))}
             </div>
-            
+
             {/* Timeline Bar */}
             <div className="relative h-10 rounded-full overflow-hidden flex">
               {currentStages.map((stage, index) => {
                 const color = stage.color;
-                const nextColor = index < currentStages.length - 1 
+                const nextColor = index < currentStages.length - 1
                   ? currentStages[index + 1].color
                   : color;
-                
+
                 return (
                   <div
                     key={stage.name}
