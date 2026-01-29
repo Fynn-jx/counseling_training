@@ -182,7 +182,16 @@ export function ChatInterface({ scenario, onBack }: ChatInterfaceProps) {
                   <div className="text-center">
                     <Bot className="w-16 h-16 mx-auto mb-4 text-slate-300" />
                     <p className="text-slate-400 text-sm">
-                      {isLoading ? '正在连接来访者...' : '等待来访者进入...'}
+                      {isLoading ? (
+                        <span className="inline-flex items-center gap-1">
+                          正在连接来访者
+                          <span className="typing-dots">
+                            <span className="dot">.</span>
+                            <span className="dot">.</span>
+                            <span className="dot">.</span>
+                          </span>
+                        </span>
+                      ) : '等待来访者进入...'}
                     </p>
                     {!isLoading && (
                       <p className="text-slate-300 text-xs mt-2">
@@ -260,28 +269,6 @@ export function ChatInterface({ scenario, onBack }: ChatInterfaceProps) {
                   </div>
                 </div>
               ))}
-
-              {/* Loading Indicator */}
-              {isLoading && messages.length > 0 && (
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-slate-200 to-slate-300">
-                    <Bot className="w-5 h-5 text-slate-600" />
-                  </div>
-                  <div className="flex-1 items-start flex flex-col">
-                    <div className="px-4 py-3 rounded-2xl bg-slate-100">
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm text-slate-500">来访者正在输入</span>
-                        <span className="typing-dots">
-                          <span className="dot">.</span>
-                          <span className="dot">.</span>
-                          <span className="dot">.</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div ref={messagesEndRef} />
             </div>
           </div>
