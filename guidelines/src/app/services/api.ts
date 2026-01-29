@@ -140,6 +140,28 @@ export class DifyApiService {
     return null;
   }
 
+  // 从文本中提取第一个完整的JSON对象
+  private extractFirstJson(text: string): string | null {
+    let startIndex = -1;
+    let braceCount = 0;
+
+    for (let i = 0; i < text.length; i++) {
+      if (text[i] === '{') {
+        if (startIndex === -1) {
+          startIndex = i;
+        }
+        braceCount++;
+      } else if (text[i] === '}') {
+        braceCount--;
+        if (braceCount === 0 && startIndex !== -1) {
+          return text.substring(startIndex, i + 1);
+        }
+      }
+    }
+
+    return null;
+  }
+
   async callVisitorAgent(message: string): Promise<VisitorResponse> {
     const response = await this.callDifyAPI(API_CONFIG.visitor, message, this.visitorConversationId);
 
@@ -182,17 +204,28 @@ export class DifyApiService {
         if (firstJson.reply) {
           if (typeof firstJson.reply === 'string' && firstJson.reply.includes('{')) {
             try {
+              console.log('尝试解析reply字段:', firstJson.reply);
+
               // 先处理转义字符
               let processedReply = firstJson.reply
                 .replace(/\\n/g, '\n')
                 .replace(/\\"/g, '"');
 
-              // 尝试提取 markdown 代码块中的 JSON
+              console.log('处理后的reply:', processedReply);
+
+              // 尝试提取 markdown 代码块中的内容
               const jsonBlockMatch = processedReply.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-              if (jsonBlockMatch) {
-                // 从代码块中提取纯 JSON（去掉 markdown 标记）
-                const jsonContent = jsonBlockMatch[1].trim();
-                const replyJson = JSON.parse(jsonContent) as NewApiResponse;
+              let contentToParse = jsonBlockMatch ? jsonBlockMatch[1].trim() : processedReply;
+
+              console.log('准备解析的内容:', contentToParse);
+
+              // 从内容中提取第一个完整的JSON对象
+              const extractedJson = this.extractFirstJson(contentToParse);
+
+              if (extractedJson) {
+                console.log('提取到的JSON:', extractedJson);
+                const replyJson = JSON.parse(extractedJson) as NewApiResponse;
+
                 if (replyJson.reply) {
                   visitorText = replyJson.reply;
                 }
@@ -206,20 +239,7 @@ export class DifyApiService {
                   }
                 }
               } else {
-                // 没有代码块，尝试直接解析
-                const replyJson = JSON.parse(processedReply) as NewApiResponse;
-                if (replyJson.reply) {
-                  visitorText = replyJson.reply;
-                }
-                if (replyJson.open_stage) {
-                  const levelMatch = replyJson.open_stage.match(/\bLevel\s+(\d+)\b/i);
-                  if (levelMatch) {
-                    const levelValue = parseInt(levelMatch[1], 10);
-                    if (levelValue >= 1 && levelValue <= 4) {
-                      opennessLevel = levelValue;
-                    }
-                  }
-                }
+                throw new Error('无法从reply中提取JSON对象');
               }
             } catch (e) {
               console.error('reply字段JSON解析失败，尝试直接提取:', e);
