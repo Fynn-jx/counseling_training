@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, ArrowLeft, User, Bot } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 import { VisitorStatus } from '@/app/components/VisitorStatus';
@@ -259,6 +260,28 @@ export function ChatInterface({ scenario, onBack }: ChatInterfaceProps) {
                   </div>
                 </div>
               ))}
+
+              {/* Loading Indicator */}
+              {isLoading && messages.length > 0 && (
+                <div className="flex gap-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-slate-200 to-slate-300">
+                    <Bot className="w-5 h-5 text-slate-600" />
+                  </div>
+                  <div className="flex-1 items-start flex flex-col">
+                    <div className="px-4 py-3 rounded-2xl bg-slate-100">
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm text-slate-500">来访者正在输入</span>
+                        <span className="typing-dots">
+                          <span className="dot">.</span>
+                          <span className="dot">.</span>
+                          <span className="dot">.</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
           </div>
