@@ -1,5 +1,4 @@
 import { AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
-import { ScrollArea } from '@/app/components/ui/scroll-area';
 import type { SupervisorEvaluation } from '@/app/services/api';
 
 interface SupervisorEvaluationWithTurn extends SupervisorEvaluation {
@@ -26,7 +25,7 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
   return (
     <div className="h-full bg-white border-l border-slate-200 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-slate-200">
+      <div className="p-6 border-b border-slate-200 flex-shrink-0">
         <h2 className="text-lg font-semibold text-slate-900 mb-1">
           督导反馈
         </h2>
@@ -35,8 +34,8 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
         </p>
       </div>
 
-      {/* Scrollable Content */}
-      <ScrollArea className="flex-1">
+      {/* Scrollable Content - 使用原生滚动 */}
+      <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
           {evaluations.length === 0 ? (
             <div className="flex items-center justify-center py-12">
@@ -124,7 +123,7 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
             })
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
