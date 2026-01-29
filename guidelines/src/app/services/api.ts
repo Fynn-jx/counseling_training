@@ -308,90 +308,73 @@ export class DifyApiService {
 
     try {
       let cleanAnswer = response.answer.trim();
+      console.log('督导原始响应:', cleanAnswer);
 
-      // 尝试解析新的全JSON格式：{ "result": { "reply": "```json\n{...}\n```" } }
+      // 尝试解析各种可能的格式
+      let evaluationData: SupervisorEvaluation | null = null;
+
+      // 格式1: {"result": {"reply": "自然语言反馈...\n\n结构化输出：\n{...}"}}
       try {
         const outerJson = JSON.parse(cleanAnswer);
         if (outerJson.result && outerJson.result.reply) {
           let replyContent = outerJson.result.reply;
-
-          // 从markdown代码块中提取JSON
-          const jsonBlockMatch = replyContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-          if (jsonBlockMatch) {
-            replyContent = jsonBlockMatch[1];
+          // 使用 extractFirstJson 提取结构化输出中的 JSON
+          const extractedJson = this.extractFirstJson(replyContent);
+          if (extractedJson) {
+            evaluationData = JSON.parse(extractedJson) as SupervisorEvaluation;
+            console.log('从 result.reply 中提取到督导数据:', evaluationData);
           }
-
-          // 解析内部的JSON
-          const innerJson = JSON.parse(replyContent);
-          if (innerJson.综合得分 !== undefined || innerJson.总体评价 || innerJson.建议 || innerJson.跳步判断) {
-            // 确保所有字段都存在
-            if (!innerJson.综合得分) innerJson.综合得分 = 3;
-            if (!innerJson.总体评价) innerJson.总体评价 = '暂无评价';
-            if (!innerJson.建议) innerJson.建议 = '请继续关注来访者的需求和感受。';
-            if (!innerJson.跳步判断) innerJson.跳步判断 = {
-              是否跳步: false,
-              跳步类型: "无",
-              督导建议: "无跳步问题"
-            };
-
-            return innerJson as SupervisorEvaluation;
+        }
+        // 格式2: {"reply": "自然语言反馈...\n\n结构化输出：\n{...}"}
+        else if (outerJson.reply) {
+          let replyContent = outerJson.reply;
+          // 使用 extractFirstJson 提取结构化输出中的 JSON
+          const extractedJson = this.extractFirstJson(replyContent);
+          if (extractedJson) {
+            evaluationData = JSON.parse(extractedJson) as SupervisorEvaluation;
+            console.log('从 reply 中提取到督导数据:', evaluationData);
           }
+        }
+        // 格式3: 直接包含督导字段的 JSON
+        else if (outerJson.综合得分 !== undefined || outerJson.总体评价 || outerJson.建议 || outerJson.跳步判断) {
+          evaluationData = outerJson as SupervisorEvaluation;
+          console.log('直接解析到督导数据:', evaluationData);
         }
       } catch (e) {
-        console.log('不是新的全JSON格式，尝试其他解析方式');
+        console.log('尝试格式1-3失败:', e);
       }
 
-      // 原有的解析逻辑（向后兼容）
-      const hasJsonStructure =
-        (cleanAnswer.includes('{') && cleanAnswer.includes('}')) ||
-        (cleanAnswer.includes('"综合得分"') && cleanAnswer.includes('"总体评价"')) ||
-        (cleanAnswer.includes('"跳步判断"'));
-
-      if (hasJsonStructure) {
-        let evaluationData: SupervisorEvaluation | null = null;
-
-        try {
-          evaluationData = JSON.parse(cleanAnswer);
-        } catch (parseError) {
+      // 如果上面的格式都没匹配到，尝试从文本中直接提取 JSON
+      if (!evaluationData) {
+        const extractedJson = this.extractFirstJson(cleanAnswer);
+        if (extractedJson) {
           try {
-            const jsonText = this.extractJsonObjectFromText(cleanAnswer);
-            if (!jsonText) throw new Error('未找到JSON对象');
-            const cleanedJson = jsonText
-              .replace(/[\u0000-\u001F\u200B-\u200D\u202A-\u202E\u2060-\u206F\uFEFF]/g, '')
-              .trim();
-            evaluationData = JSON.parse(cleanedJson);
-          } catch (secondParseError) {
-            throw secondParseError;
+            evaluationData = JSON.parse(extractedJson) as SupervisorEvaluation;
+            console.log('从文本中提取到督导数据:', evaluationData);
+          } catch (e) {
+            console.log('解析提取的JSON失败:', e);
           }
         }
+      }
 
-        if (evaluationData) {
-          if (!evaluationData.综合得分) evaluationData.综合得分 = 3;
-          if (!evaluationData.总体评价) evaluationData.总体评价 = '暂无评价';
-          if (!evaluationData.建议) evaluationData.建议 = '请继续关注来访者的需求和感受。';
-          if (!evaluationData.跳步判断) evaluationData.跳步判断 = {
-            是否跳步: false,
-            跳步类型: "无",
-            督导建议: "无跳步问题"
-          };
-
-          return evaluationData;
-        } else {
-          throw new Error('无法解析JSON格式');
-        }
-      } else {
-        return {
-          综合得分: 3,
-          总体评价: cleanAnswer,
-          建议: "请继续关注来访者的需求和感受。",
-          跳步判断: {
-            是否跳步: false,
-            跳步类型: "无",
-            督导建议: "当前回复符合基本要求"
-          }
+      if (evaluationData) {
+        // 确保所有字段都存在
+        if (evaluationData.综合得分 === undefined) evaluationData.综合得分 = 3;
+        if (!evaluationData.总体评价) evaluationData.总体评价 = '暂无评价';
+        if (!evaluationData.建议) evaluationData.建议 = '请继续关注来访者的需求和感受。';
+        if (!evaluationData.跳步判断) evaluationData.跳步判断 = {
+          是否跳步: false,
+          跳步类型: "无",
+          督导建议: "无跳步问题"
         };
+
+        console.log('最终督导数据:', evaluationData);
+        return evaluationData;
+      } else {
+        throw new Error('无法解析督导数据格式');
       }
     } catch (error) {
+      console.error('督导解析错误:', error);
       return {
         综合得分: 3,
         总体评价: response.answer,
