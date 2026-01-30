@@ -359,6 +359,7 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               <div ref={messagesEndRef} />
             </div>
           </div>
+          )}
 
           {/* Input Area - only show after starting */}
           {hasStarted && (
