@@ -20,20 +20,29 @@ const stageColors = {
   '平静': '#BFDFD2'
 };
 
+const colorPalette = [
+  '#BFDFD2', // 浅青色
+  '#51999F', // 深青色
+  '#4198AC', // 蓝色
+  '#7BC0CD', // 浅蓝色
+  '#DBCB92', // 米黄色
+  '#ECB66C', // 橙黄色
+  '#EA9E58', // 橙色
+  '#ED8D5A'  // 橙红色
+];
+
 const generateColorForLabel = (label: string): string => {
+  // 首先检查预定义的颜色
   if (stageColors[label as keyof typeof stageColors]) {
     return stageColors[label as keyof typeof stageColors];
   }
-  
+
+  // 对于未知标签，使用色卡中的颜色
   const hash = label.split('').reduce((acc, char) => {
     return acc + char.charCodeAt(0);
   }, 0);
-  
-  const hue = hash % 360;
-  const saturation = 70;
-  const lightness = 50;
-  
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+  return colorPalette[hash % colorPalette.length];
 };
 
 export function VisitorStatus({ chartData }: VisitorStatusProps) {

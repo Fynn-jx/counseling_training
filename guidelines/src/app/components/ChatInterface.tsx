@@ -22,13 +22,84 @@ interface ChatInterfaceProps {
   onFinish: () => void;
 }
 
+function OpeningScreen({ scenario, onStart }: { scenario: Scenario; onStart: () => void }) {
+  return (
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 overflow-y-auto">
+      <div className="flex-1 flex items-center justify-center px-6 py-8">
+        <div className="max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-5">
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full mb-2">
+                <span className="text-2xl">👨‍🏫</span>
+              </div>
+              <h1 className="text-xl font-bold text-slate-900">
+                您好！我是您的专属心理咨询培训督导。
+              </h1>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                在接下来的模拟咨询中，我将全程在后台陪伴您，实时监控咨访关系，并在必要时给予策略建议。
+              </p>
+            </div>
+
+            {scenario.visitorProfile && (
+              <div className="space-y-4 border-t border-slate-100 pt-5">
+                <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                  <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
+                    <span>📋</span> 今日来访者档案
+                  </h2>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex">
+                      <span className="text-slate-500 w-20 flex-shrink-0">姓名</span>
+                      <span className="text-slate-900 font-medium">{scenario.visitorProfile.name}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-slate-500 w-20 flex-shrink-0">年龄</span>
+                      <span className="text-slate-900">{scenario.visitorProfile.age}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-slate-500 w-20 flex-shrink-0">主诉问题</span>
+                      <span className="text-slate-900">{scenario.visitorProfile.problem}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="text-slate-500 w-20 flex-shrink-0">防御特征</span>
+                      <span className="text-slate-900 text-xs leading-relaxed">{scenario.visitorProfile.defense}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <h2 className="text-base font-semibold text-amber-900 flex items-center gap-2 mb-2">
+                    <span>🎯</span> 本局训练目标
+                  </h2>
+                  <p className="text-sm text-amber-800 leading-relaxed">
+                    {scenario.visitorProfile.trainingGoal}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="text-center pt-2">
+              <Button
+                onClick={onStart}
+                className="text-white px-10 py-5 text-base h-auto hover:opacity-90"
+                style={{ backgroundColor: '#7BC0CD' }}
+              >
+                开始新的对话练习
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [supervisorEvaluations, setSupervisorEvaluations] = useState<Array<SupervisorEvaluation & { turn: number }>>([]);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleReset = async () => {
@@ -36,6 +107,7 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
     setInput('');
     setChartData(null);
     setSupervisorEvaluations([]);
+    setHasStarted(true);
     setIsLoading(true);
 
     try {
@@ -69,13 +141,6 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  useEffect(() => {
-    if (!hasInitialized) {
-      setHasInitialized(true);
-      handleReset();
-    }
-  }, [hasInitialized]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -129,6 +194,10 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
       handleSend();
     }
   };
+
+  if (!hasStarted) {
+    return <OpeningScreen scenario={scenario} onStart={handleReset} />;
+  }
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
@@ -228,11 +297,11 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
 
                     <div
                       className={`px-4 py-3 rounded-2xl max-w-[85%] ${
-                        message.role === 'user'
-                          ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
+                        message.role === 'assistant'
+                          ? 'bg-slate-100 text-slate-900'
                           : 'text-white'
                       }`}
-                      style={message.role === 'assistant' ? { backgroundColor: '#4198AC' } : {}}
+                      style={message.role === 'user' ? { backgroundColor: '#7BC0CD' } : {}}
                     >
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {message.content}
@@ -255,11 +324,8 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
                     <Bot className="w-5 h-5 text-slate-600" />
                   </div>
                   <div className="flex-1 items-start flex flex-col">
-                    <div
-                      className="px-4 py-3 rounded-2xl text-white"
-                      style={{ backgroundColor: '#4198AC' }}
-                    >
-                      <span className="text-sm">来访者正在输入</span>
+                    <div className="px-4 py-3 rounded-2xl bg-slate-100">
+                      <span className="text-sm text-slate-500">来访者正在输入</span>
                       <span className="typing-indicator">
                         <span className="typing-dot"></span>
                         <span className="typing-dot"></span>
