@@ -72,7 +72,7 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
 
   const emotionTimelineData = chartData?.conversation_stage_curve?.map(item => ({
     turn: `第${item.dialogue_count}轮`,
-    value: item.stage
+    stage: item.stage
   })) || [];
 
   const stressData = chartData?.stress_curve?.map(item => ({
@@ -138,10 +138,12 @@ export function VisitorStatus({ chartData }: VisitorStatusProps) {
                   axisLine={{ stroke: '#cbd5e1' }}
                   label={{ value: '阶段', angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#64748b' } }}
                 />
-                <Tooltip />
+                <Tooltip
+                  formatter={(value: number, name: string) => [value, 'stage']}
+                />
                 <Area
                   type="monotone"
-                  dataKey="value"
+                  dataKey="stage"
                   stroke="#4198AC"
                   strokeWidth={2}
                   fill="url(#colorEmotion)"

@@ -371,12 +371,12 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               </div>
 
               {/* End Practice Button */}
-              <div className="px-8 pb-6">
-                <div className="max-w-3xl mx-auto">
+              <div className="px-8 pb-8">
+                <div className="max-w-3xl mx-auto flex justify-center">
                   <Button
                     onClick={onFinish}
-                    variant="outline"
-                    className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="w-1/2 text-white hover:opacity-90"
+                    style={{ backgroundColor: '#ED8D5A' }}
                   >
                     结束练习
                   </Button>
