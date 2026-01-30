@@ -328,7 +328,6 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               </div>
             </div>
           </div>
-          </div>
         </div>
 
         {/* Right Sidebar - Supervisor Feedback */}
