@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, ArrowLeft, User, Bot } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
 import { VisitorStatus } from '@/app/components/VisitorStatus';
@@ -42,10 +41,7 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
 
     try {
       difyApiService.resetConversations();
-
       const initialResponse = await difyApiService.callVisitorAgent('你好，我是一名心理咨询师，很高兴认识你。请告诉我你今天想聊些什么？');
-
-      console.log('初始响应:', initialResponse);
 
       const initialMessage: Message = {
         id: 1,
@@ -58,10 +54,7 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
       setMessages([initialMessage]);
 
       if (initialResponse.chartData) {
-        console.log('设置图表数据:', initialResponse.chartData);
         setChartData(initialResponse.chartData);
-      } else {
-        console.log('没有图表数据');
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
@@ -177,26 +170,9 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
 
         {/* Center - Chat Area */}
         <div className="flex-1 flex flex-col bg-white min-w-0">
-          {/* Messages (after starting) */}
-          {hasStarted && (
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-              <div className="max-w-3xl mx-auto space-y-6">
-                {/* Empty state or loading state */}
-                {messages.length === 0 && (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Bot className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                      <p className="text-slate-400 text-sm">
-                        {isLoading ? '正在连接来访者...' : '等待来访者进入...'}
-                      </p>
-                      {!isLoading && (
-                        <p className="text-slate-300 text-xs mt-2">
-                          点击右上角"开始新的对话练习"按钮开始
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="max-w-3xl mx-auto space-y-6">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -232,8 +208,8 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
                           <span className="text-xs text-slate-500">自我暴露</span>
                           <div className="flex gap-0.5">
                             {[1, 2, 3, 4].map((i) => (
-                              <div 
-                                key={i} 
+                              <div
+                                key={i}
                                 className={`h-1.5 w-4 rounded-full ${
                                   i <= message.openness! ? 'bg-amber-400' : 'bg-slate-200'
                                 }`}
@@ -243,7 +219,7 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
                         </div>
                       </div>
                     )}
-                    
+
                     <div
                       className={`px-4 py-3 rounded-2xl max-w-[85%] ${
                         message.role === 'user'
@@ -287,36 +263,33 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               <div ref={messagesEndRef} />
             </div>
           </div>
-          )}
 
-          {/* Input Area - only show after starting */}
-          {hasStarted && (
-            <div className="border-t border-slate-200 bg-white">
-              <div className="px-8 py-6">
-                <div className="max-w-3xl mx-auto">
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1 relative">
-                      <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="输入您的回复... (Shift+Enter 换行)"
-                        className="min-h-[60px] max-h-[200px] resize-none pr-4 text-sm"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleSend}
-                      disabled={!input.trim()}
-                      className="h-[60px] px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300"
-                    >
-                      <Send className="w-4 h-4 mr-2" />
-                      发送
-                    </Button>
+          {/* Input Area */}
+          <div className="border-t border-slate-200 bg-white">
+            <div className="px-8 py-6">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1 relative">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="输入您的回复... (Shift+Enter 换行)"
+                      className="min-h-[60px] max-h-[200px] resize-none pr-4 text-sm"
+                    />
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    按 Enter 发送消息，Shift+Enter 换行
-                  </p>
+                  <Button
+                    onClick={handleSend}
+                    disabled={!input.trim()}
+                    className="h-[60px] px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    发送
+                  </Button>
                 </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  按 Enter 发送消息，Shift+Enter 换行
+                </p>
               </div>
 
               {/* End Practice Button */}
@@ -332,7 +305,6 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
                 </div>
               </div>
             </div>
-          )}
           </div>
         </div>
 
