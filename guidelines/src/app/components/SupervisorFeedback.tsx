@@ -69,6 +69,15 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
                       </div>
                     </div>
 
+                    {/* Natural Language Feedback (新督导格式) */}
+                    {evaluation.natural_language_feedback && (
+                      <div className="mb-4 p-4 bg-white/50 rounded-lg">
+                        <p className="text-sm text-slate-700 leading-relaxed">
+                          {evaluation.natural_language_feedback}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Summary */}
                     <div className="mb-4">
                       <p className="text-sm text-slate-700 leading-relaxed">

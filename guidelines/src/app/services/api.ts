@@ -42,6 +42,7 @@ interface SupervisorEvaluation {
     跳步类型: string;
     督导建议: string;
   };
+  natural_language_feedback?: string;
 }
 
 const getApiConfig = () => {
@@ -345,8 +346,23 @@ export class DifyApiService {
         if (extractedJson) {
           console.log('从 reply 中提取到 JSON:', extractedJson.substring(0, 200) + '...');
           try {
-            evaluationData = JSON.parse(extractedJson) as SupervisorEvaluation;
-            console.log('成功解析督导数据:', evaluationData);
+            const parsed = JSON.parse(extractedJson);
+            // 检查是否有 structured_output 字段（新督导格式）
+            if (parsed.structured_output && (
+              parsed.structured_output.综合得分 !== undefined ||
+              parsed.structured_output.总体评价 ||
+              parsed.structured_output.建议 ||
+              parsed.structured_output.跳步判断
+            )) {
+              evaluationData = {
+                ...parsed.structured_output,
+                natural_language_feedback: parsed.natural_language_feedback
+              } as SupervisorEvaluation;
+              console.log('成功解析督导数据(structured_output格式):', evaluationData);
+            } else if (parsed.综合得分 !== undefined || parsed.总体评价 || parsed.建议 || parsed.跳步判断) {
+              evaluationData = parsed as SupervisorEvaluation;
+              console.log('成功解析督导数据(直接格式):', evaluationData);
+            }
           } catch (e) {
             console.log('解析提取的JSON失败:', e);
           }
@@ -359,16 +375,37 @@ export class DifyApiService {
         if (extractedJson) {
           try {
             const parsed = JSON.parse(extractedJson);
-            // 检查是否包含督导字段
-            if (parsed.综合得分 !== undefined || parsed.总体评价 || parsed.建议 || parsed.跳步判断) {
+            // 检查是否有 structured_output 字段（新督导格式）
+            if (parsed.structured_output && (
+              parsed.structured_output.综合得分 !== undefined ||
+              parsed.structured_output.总体评价 ||
+              parsed.structured_output.建议 ||
+              parsed.structured_output.跳步判断
+            )) {
+              evaluationData = {
+                ...parsed.structured_output,
+                natural_language_feedback: parsed.natural_language_feedback
+              } as SupervisorEvaluation;
+              console.log('从文本中提取到督导数据(structured_output格式):', evaluationData);
+            } else if (parsed.综合得分 !== undefined || parsed.总体评价 || parsed.建议 || parsed.跳步判断) {
               evaluationData = parsed as SupervisorEvaluation;
-              console.log('从文本中提取到督导数据:', evaluationData);
+              console.log('从文本中提取到督导数据(直接格式):', evaluationData);
             } else if (parsed.reply) {
               // 如果提取的是 {"reply": "..."}，再从 reply 中提取
               const innerJson = this.extractFirstJson(parsed.reply);
               if (innerJson) {
-                evaluationData = JSON.parse(innerJson) as SupervisorEvaluation;
-                console.log('从嵌套的 reply 中提取到督导数据:', evaluationData);
+                const innerParsed = JSON.parse(innerJson);
+                // 检查 innerParsed 是否有 structured_output
+                if (innerParsed.structured_output) {
+                  evaluationData = {
+                    ...innerParsed.structured_output,
+                    natural_language_feedback: innerParsed.natural_language_feedback
+                  } as SupervisorEvaluation;
+                  console.log('从嵌套 reply 的 structured_output 中提取到督导数据:', evaluationData);
+                } else {
+                  evaluationData = innerParsed as SupervisorEvaluation;
+                  console.log('从嵌套的 reply 中提取到督导数据:', evaluationData);
+                }
               }
             }
           } catch (e) {
