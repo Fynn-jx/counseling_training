@@ -170,8 +170,8 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
         const currentTurn = Math.floor((messages.length + 1) / 2);
         console.log('督导数据收到:', supervisorResponse);
 
-        // 更新督导评价列表
-        setSupervisorEvaluations(prev => [...prev, { ...supervisorResponse.evaluation, turn: currentTurn }]);
+        // 只保留当前轮的督导评价（不累积历史）
+        setSupervisorEvaluations([{ ...supervisorResponse.evaluation, turn: currentTurn }]);
 
         // 累积胜任力维度（取平均值或保留最新）
         setCompetencyScores(prev => {
