@@ -1,10 +1,20 @@
 import { Download, ArrowLeft, Star, TrendingUp, AlertCircle } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
+import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 interface EvaluationReportProps {
   scenarioName: string;
   onStartNew: () => void;
   onBackToScenarios: () => void;
+}
+
+interface CompetencyScores {
+  Professionalism?: number;
+  Relational?: number;
+  Science?: number;
+  Application?: number;
+  Education?: number;
+  Systems?: number;
 }
 
 // 静态数据，后续将从API获取
@@ -20,16 +30,47 @@ const staticReportData = {
     "可以更多地运用反映性倾听技术，加深情感连接",
     "需要注意咨询节奏，避免在来访者未准备好时推进过快"
   ],
-  conversationTurns: 5
+  conversationTurns: 5,
+  competencyScores: {
+    Professionalism: 6.0,
+    Relational: 5.5,
+    Science: 0,
+    Application: 7.0,
+    Education: 0,
+    Systems: 0
+  } as CompetencyScores
+};
+
+// 六个维度的配置
+const competencyDimensions = [
+  { key: 'Professionalism', label: '专业素养', color: '#BFDFD2' },
+  { key: 'Relational', label: '关系建立', color: '#51999F' },
+  { key: 'Science', label: '科学知识', color: '#4198AC' },
+  { key: 'Application', label: '应用能力', color: '#7BC0CD' },
+  { key: 'Education', label: '教育指导', color: '#DBCB92' },
+  { key: 'Systems', label: '系统思维', color: '#ECB66C' }
+];
+
+// 准备雷达图数据
+const prepareRadarData = (scores: CompetencyScores) => {
+  return competencyDimensions.map(dim => ({
+    dimension: dim.label,
+    fullMark: 10,
+    [dim.key]: (scores[dim.key as keyof CompetencyScores] || 0),
+    value: scores[dim.key as keyof CompetencyScores] || 0
+  }));
 };
 
 export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }: EvaluationReportProps) {
+  const radarData = prepareRadarData(staticReportData.competencyScores);
+
   const handleExport = () => {
     // 静态导出示例
     const exportData = {
       scenario: scenarioName,
       overallScore: staticReportData.overallScore,
       conversationTurns: staticReportData.conversationTurns,
+      competencyScores: staticReportData.competencyScores,
       conversation: [
         {
           role: "visitor",
@@ -118,6 +159,61 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
               <Download className="w-5 h-5 mr-2" />
               导出对话记录
             </Button>
+          </div>
+        </div>
+
+        {/* Competency Radar Chart */}
+        <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200 mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 mb-6">胜任力评估</h2>
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Radar Chart */}
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height={400}>
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="dimension" tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fill: '#64748b', fontSize: 10 }} />
+                  {competencyDimensions.map((dim, index) => (
+                    <Radar
+                      key={dim.key}
+                      name={dim.label}
+                      dataKey={dim.key}
+                      stroke={dim.color}
+                      fill={dim.color}
+                      fillOpacity={0.6}
+                      strokeWidth={2}
+                    />
+                  ))}
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Legend */}
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">维度得分</h3>
+              <div className="space-y-3">
+                {competencyDimensions.map((dim) => {
+                  const score = staticReportData.competencyScores[dim.key as keyof CompetencyScores] || 0;
+                  return (
+                    <div key={dim.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-4 h-4 rounded-full"
+                          style={{ backgroundColor: dim.color }}
+                        />
+                        <span className="text-sm font-medium text-slate-900">{dim.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-lg font-bold ${getScoreColor(score / 2)}`}>
+                          {score.toFixed(1)}
+                        </span>
+                        <span className="text-xs text-slate-500">/ 10</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 

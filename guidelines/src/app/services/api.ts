@@ -43,6 +43,13 @@ interface SupervisorEvaluation {
     督导建议: string;
   };
   natural_language_feedback?: string;
+  // 六个胜任力维度
+  Professionalism?: number;
+  Relational?: number;
+  Science?: number;
+  Application?: number;
+  Education?: number;
+  Systems?: number;
 }
 
 const getApiConfig = () => {
