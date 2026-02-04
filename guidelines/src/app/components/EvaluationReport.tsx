@@ -170,22 +170,27 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
             <div className="flex-1">
               <ResponsiveContainer width="100%" height={400}>
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                  <PolarGrid />
+                  <PolarGrid stroke="#e2e8f0" />
                   <PolarAngleAxis dataKey="dimension" tick={{ fill: '#64748b', fontSize: 12 }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fill: '#64748b', fontSize: 10 }} />
-                  {competencyDimensions.map((dim, index) => (
-                    <Radar
-                      key={dim.key}
-                      name={dim.label}
-                      dataKey={dim.key}
-                      stroke={dim.color}
-                      fill={dim.color}
-                      fillOpacity={0.6}
-                      strokeWidth={2}
-                    />
-                  ))}
+                  <PolarRadiusAxis
+                    angle={90}
+                    domain={[0, 10]}
+                    tick={{ fill: '#64748b', fontSize: 10 }}
+                    tickCount={6}
+                  />
+                  <Radar
+                    name="胜任力"
+                    dataKey="value"
+                    stroke="#4198AC"
+                    fill="#4198AC"
+                    fillOpacity={0.5}
+                    strokeWidth={2}
+                  />
                 </RadarChart>
               </ResponsiveContainer>
+              <p className="text-xs text-slate-500 mt-3 text-center">
+                注：零分并不意味着能力差，而是咨询过程中没有涉及到该维度
+              </p>
             </div>
 
             {/* Legend */}
