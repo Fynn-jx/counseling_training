@@ -1,4 +1,5 @@
-import { AlertCircle, CheckCircle, Lightbulb } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, CheckCircle, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SupervisorEvaluation } from '@/app/services/api';
 
 interface SupervisorEvaluationWithTurn extends SupervisorEvaluation {
@@ -10,6 +11,21 @@ interface SupervisorFeedbackProps {
 }
 
 export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
+  // 为每个评价跟踪展开/折叠状态
+  const [expandedFeedbacks, setExpandedFeedbacks] = useState<Set<number>>(new Set());
+
+  const toggleFeedback = (turn: number) => {
+    setExpandedFeedbacks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(turn)) {
+        newSet.delete(turn);
+      } else {
+        newSet.add(turn);
+      }
+      return newSet;
+    });
+  };
+
   const getScoreClass = (score: number) => {
     if (score >= 4) return 'text-green-600';
     if (score >= 3) return 'text-yellow-600';
@@ -69,12 +85,29 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
                       </div>
                     </div>
 
-                    {/* Natural Language Feedback (新督导格式) */}
+                    {/* Natural Language Feedback (可折叠) */}
                     {evaluation.natural_language_feedback && (
-                      <div className="mb-4 p-4 bg-white/50 rounded-lg">
-                        <p className="text-sm text-slate-700 leading-relaxed">
-                          {evaluation.natural_language_feedback}
-                        </p>
+                      <div className="mb-4">
+                        <button
+                          onClick={() => toggleFeedback(evaluation.turn)}
+                          className="w-full flex items-center gap-2 p-3 bg-white/50 rounded-lg hover:bg-white/70 transition-colors"
+                        >
+                          {expandedFeedbacks.has(evaluation.turn) ? (
+                            <ChevronDown className="w-4 h-4 text-slate-600" />
+                          ) : (
+                            <ChevronRight className="w-4 h-4 text-slate-600" />
+                          )}
+                          <span className="text-sm font-medium text-slate-700">
+                            查看详细评价
+                          </span>
+                        </button>
+                        {expandedFeedbacks.has(evaluation.turn) && (
+                          <div className="mt-2 p-4 bg-white/50 rounded-lg">
+                            <p className="text-sm text-slate-700 leading-relaxed">
+                              {evaluation.natural_language_feedback}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
