@@ -126,7 +126,8 @@ const getApiConfig = () => {
   };
 };
 
-const API_CONFIG = getApiConfig();
+// 移除模块加载时的缓存，改为每次调用时动态获取配置
+// const API_CONFIG = getApiConfig();
 
 export class DifyApiService {
   private visitorConversationId: string | null = null;
@@ -139,12 +140,15 @@ export class DifyApiService {
   }
 
   private async callDifyAPI(
-    config: { url: string; key: string },
+    configType: 'visitor' | 'supervisor' | 'overall',
     message: string,
     conversationId: string | null = null,
     retries = 2,
     timeoutMs = 120000 // 默认120秒超时，督导API需要更长时间
   ): Promise<DifyResponse> {
+    // 每次调用时动态获取最新配置
+    const config = getApiConfig()[configType];
+
     const requestBody: ChatMessage = {
       inputs: {},
       query: message,
@@ -340,7 +344,7 @@ export class DifyApiService {
   }
 
   async callVisitorAgent(message: string): Promise<VisitorResponse> {
-    const response = await this.callDifyAPI(API_CONFIG.visitor, message, this.visitorConversationId);
+    const response = await this.callDifyAPI('visitor', message, this.visitorConversationId);
 
     if (response.conversation_id) {
       this.visitorConversationId = response.conversation_id;
@@ -483,7 +487,7 @@ export class DifyApiService {
     
     console.log('发送给督导的完整Prompt:', queryText);
 
-    const response = await this.callDifyAPI(API_CONFIG.supervisor, queryText, this.supervisorConversationId);
+    const response = await this.callDifyAPI('supervisor', queryText, this.supervisorConversationId);
 
     if (response.conversation_id) {
       this.supervisorConversationId = response.conversation_id;
@@ -736,7 +740,8 @@ export class DifyApiService {
   // 调用综合评价API
   async callOverallEvaluationAPI(competencyScores: CompetencyScores): Promise<OverallEvaluation | null> {
     // 检查是否有综合评价API的key
-    if (!API_CONFIG.overall.key) {
+    const config = getApiConfig().overall;
+    if (!config.key) {
       console.warn('未配置综合评价API key');
       return null;
     }
@@ -760,7 +765,7 @@ ${competencySummary}
 请根据以上信息给出综合评价。`;
 
     try {
-      const response = await this.callDifyAPI(API_CONFIG.overall, prompt, null, 1);
+      const response = await this.callDifyAPI('overall', prompt, null, 1);
 
       let answer = response.answer.trim();
       console.log('综合评价原始响应:', answer);
