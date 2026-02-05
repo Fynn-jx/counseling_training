@@ -11,10 +11,8 @@ interface SupervisorFeedbackProps {
 }
 
 export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
-  // 为每个评价跟踪自然语言反馈展开/折叠状态 - 当前轮默认展开
-  const [expandedFeedbacks, setExpandedFeedbacks] = useState<Set<number>>(
-    new Set(evaluations.length > 0 ? [evaluations[0].turn] : [])
-  );
+  // 为每个评价跟踪自然语言反馈展开/折叠状态 - 默认全部折叠
+  const [expandedFeedbacks, setExpandedFeedbacks] = useState<Set<number>>(new Set());
 
   // 切换某轮的自然语言反馈展开状态
   const toggleFeedback = (turn: number) => {
@@ -35,15 +33,12 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
   };
 
   const collapseAll = () => {
-    setExpandedFeedbacks(new Set(evaluations.length > 0 ? [evaluations[0].turn] : []));
+    setExpandedFeedbacks(new Set()); // 折叠所有
   };
 
-  // 当 evaluations 更新时，自动折叠旧轮，只展开最新一轮
+  // 当 evaluations 更新时，保持折叠状态
   useEffect(() => {
-    if (evaluations.length > 0) {
-      // 清空之前的展开状态，只展开最新一轮
-      setExpandedFeedbacks(new Set([evaluations[0].turn]));
-    }
+    // 不自动展开任何轮次，保持用户手动选择的状态
   }, [evaluations]);
 
   const getScoreClass = (score: number) => {
