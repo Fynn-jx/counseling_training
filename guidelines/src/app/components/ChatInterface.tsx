@@ -366,14 +366,14 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               ))}
 
               {/* Loading Indicator */}
-              {isLoading && messages.length > 0 && (
+              {isLoading && (
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #BFDFD2 0%, #7BC0CD 100%)' }}>
-                    <User className="w-5 h-5 text-white" />
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-slate-200 to-slate-300">
+                    <Bot className="w-5 h-5 text-slate-600" />
                   </div>
                   <div className="flex-1 items-start flex flex-col">
-                    <div className="px-4 py-3 rounded-2xl bg-slate-100 inline-block">
-                      <span className="text-sm text-slate-500">用户输入中</span>
+                    <div className="px-4 py-3 rounded-2xl bg-slate-100">
+                      <span className="text-sm text-slate-500">来访者正在输入</span>
                       <span className="typing-indicator">
                         <span className="typing-dot"></span>
                         <span className="typing-dot"></span>
