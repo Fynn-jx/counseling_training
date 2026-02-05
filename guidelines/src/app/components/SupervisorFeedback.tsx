@@ -38,17 +38,11 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
     setExpandedFeedbacks(new Set(evaluations.length > 0 ? [evaluations[0].turn] : []));
   };
 
-  // 当 evaluations 更新时，确保最新一轮的自然语言反馈始终展开
+  // 当 evaluations 更新时，自动折叠旧轮，只展开最新一轮
   useEffect(() => {
     if (evaluations.length > 0) {
-      setExpandedFeedbacks(prev => {
-        // 如果当前展开集合为空（可能是初始化状态），则展开最新一轮
-        if (prev.size === 0) {
-          return new Set([evaluations[0].turn]);
-        }
-        // 否则保持当前状态
-        return prev;
-      });
+      // 清空之前的展开状态，只展开最新一轮
+      setExpandedFeedbacks(new Set([evaluations[0].turn]));
     }
   }, [evaluations]);
 
