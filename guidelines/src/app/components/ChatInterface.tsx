@@ -224,8 +224,8 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
   const handleFinish = async () => {
     setIsFinishing(true);
     try {
-      // 调用综合评价API
-      const overallEvaluation = await difyApiService.callOverallEvaluationAPI();
+      // 调用综合评价API，传递胜任力维度数据
+      const overallEvaluation = await difyApiService.callOverallEvaluationAPI(competencyScores);
       const currentTurn = Math.floor((messages.length - 1) / 2) + 1;
 
       // 传递数据给父组件

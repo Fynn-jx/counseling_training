@@ -638,7 +638,7 @@ export class DifyApiService {
   }
 
   // 调用综合评价API
-  async callOverallEvaluationAPI(): Promise<OverallEvaluation | null> {
+  async callOverallEvaluationAPI(competencyScores: CompetencyScores): Promise<OverallEvaluation | null> {
     // 检查是否有综合评价API的key
     if (!API_CONFIG.overall.key) {
       console.warn('未配置综合评价API key');
@@ -650,7 +650,18 @@ export class DifyApiService {
       return `第${record.轮次}轮：${record.natural_language_feedback}`;
     }).join('\n\n');
 
-    const prompt = `请基于以下督导记录，给出本次咨询的综合评价：\n\n${recordsSummary}`;
+    // 构建胜任力维度数据
+    const competencySummary = JSON.stringify(competencyScores, null, 2);
+
+    const prompt = `请基于以下督导记录和胜任力维度评分，给出本次咨询的综合评价：
+
+【督导记录】
+${recordsSummary}
+
+【胜任力维度评分】
+${competencySummary}
+
+请根据以上信息给出综合评价。`;
 
     try {
       const response = await this.callDifyAPI(API_CONFIG.overall, prompt, null, 1);
