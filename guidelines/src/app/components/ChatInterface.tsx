@@ -6,7 +6,7 @@ import { VisitorStatus } from '@/app/components/VisitorStatus';
 import { SupervisorFeedback } from '@/app/components/SupervisorFeedback';
 import { difyApiService } from '@/app/services/api';
 import type { Scenario } from '@/app/components/ScenarioSelection';
-import type { ChartData, SupervisorEvaluation, CompetencyScores } from '@/app/services/api';
+import type { ChartData, SupervisorEvaluation, CompetencyScores, OverallEvaluation } from '@/app/services/api';
 
 interface Message {
   id: number;
@@ -19,7 +19,7 @@ interface Message {
 interface ChatInterfaceProps {
   scenario: Scenario;
   onBack: () => void;
-  onFinish: () => void;
+  onFinish: (evaluation?: OverallEvaluation, scores?: CompetencyScores, turns?: number) => void;
 }
 
 function OpeningScreen({ scenario, onStart }: { scenario: Scenario; onStart: () => void }) {
@@ -220,6 +220,28 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
     }
   };
 
+  const handleFinish = async () => {
+    setIsLoading(true);
+    try {
+      // 调用综合评价API
+      const overallEvaluation = await difyApiService.callOverallEvaluationAPI();
+      const currentTurn = Math.floor((messages.length - 1) / 2) + 1;
+
+      // 传递数据给父组件
+      onFinish(
+        overallEvaluation || undefined,
+        competencyScores,
+        currentTurn
+      );
+    } catch (error) {
+      console.error('获取综合评价失败:', error);
+      // 即使失败也允许进入评价页面
+      onFinish(undefined, competencyScores, Math.floor((messages.length - 1) / 2) + 1);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!hasStarted) {
     return <OpeningScreen scenario={scenario} onStart={handleReset} />;
   }
@@ -399,7 +421,8 @@ export function ChatInterface({ scenario, onBack, onFinish }: ChatInterfaceProps
               <div className="px-8 pb-4 mt-auto">
                 <div className="max-w-3xl mx-auto flex justify-center">
                   <Button
-                    onClick={onFinish}
+                    onClick={handleFinish}
+                    disabled={isLoading}
                     variant="outline"
                     className="w-1/4 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
                   >

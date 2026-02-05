@@ -82,6 +82,16 @@ interface SupervisorResponse {
   competencyScores: CompetencyScores;
 }
 
+// 综合评价响应
+interface OverallEvaluation {
+  natural_language_feedback: string;
+  structured_output: {
+    综合得分: number;
+    稳定优势: string[];
+    结构性短板: string[];
+  };
+}
+
 const getApiConfig = () => {
   // 新的网关地址映射
   const oldToNewMapping: Record<string, string> = {
@@ -92,6 +102,7 @@ const getApiConfig = () => {
   // 获取配置的 URL，如果没有则使用默认的测试环境
   let visitorUrl = import.meta.env.VITE_DIFY_VISITOR_API_URL || 'https://gateway.lingxinai.com/dify-test/v1';
   let supervisorUrl = import.meta.env.VITE_DIFY_SUPERVISOR_API_URL || 'https://gateway.lingxinai.com/dify-test/v1';
+  let overallUrl = import.meta.env.VITE_DIFY_API_OVERALL_URL || 'https://gateway.lingxinai.com/dify-test/v1';
 
   // 如果配置的是旧地址，自动转换为新地址
   if (oldToNewMapping[visitorUrl]) {
@@ -100,13 +111,18 @@ const getApiConfig = () => {
   if (oldToNewMapping[supervisorUrl]) {
     supervisorUrl = oldToNewMapping[supervisorUrl];
   }
+  if (oldToNewMapping[overallUrl]) {
+    overallUrl = oldToNewMapping[overallUrl];
+  }
 
   const visitorKey = import.meta.env.VITE_DIFY_VISITOR_API_KEY || 'app-2HjDhAbbHNl8N4T2Rcs2C25s';
   const supervisorKey = import.meta.env.VITE_DIFY_SUPERVISOR_API_KEY || 'app-3NPjpb7nkYhFAYtXpFvOShv6';
+  const overallKey = import.meta.env.VITE_DIFY_API_OVERALL_KEY || '';
 
   return {
     visitor: { url: visitorUrl, key: visitorKey },
-    supervisor: { url: supervisorUrl, key: supervisorKey }
+    supervisor: { url: supervisorUrl, key: supervisorKey },
+    overall: { url: overallUrl, key: overallKey }
   };
 };
 
@@ -614,6 +630,53 @@ export class DifyApiService {
         },
         competencyScores: {}
       };
+    }
+  }
+
+  // 调用综合评价API
+  async callOverallEvaluationAPI(): Promise<OverallEvaluation | null> {
+    // 检查是否有综合评价API的key
+    if (!API_CONFIG.overall.key) {
+      console.warn('未配置综合评价API key');
+      return null;
+    }
+
+    // 构建督导记录摘要
+    const recordsSummary = this.fullSupervisorRecords.map(record => {
+      return `第${record.轮次}轮：${record.natural_language_feedback}`;
+    }).join('\n\n');
+
+    const prompt = `请基于以下督导记录，给出本次咨询的综合评价：\n\n${recordsSummary}`;
+
+    try {
+      const response = await this.callDifyAPI(API_CONFIG.overall, prompt, null, 1);
+
+      let answer = response.answer.trim();
+      console.log('综合评价原始响应:', answer);
+
+      // 尝试从响应中提取JSON
+      const extractedJson = this.extractJsonFromMarkdown(answer);
+      if (extractedJson) {
+        const parsed = JSON.parse(extractedJson);
+
+        // 检查是否有 structured_output
+        if (parsed.structured_output) {
+          return {
+            natural_language_feedback: parsed.natural_language_feedback || '',
+            structured_output: {
+              综合得分: parsed.structured_output.综合得分 || 0,
+              稳定优势: parsed.structured_output.稳定优势 || [],
+              结构性短板: parsed.structured_output.结构性短板 || []
+            }
+          } as OverallEvaluation;
+        }
+      }
+
+      console.error('无法解析综合评价响应');
+      return null;
+    } catch (error) {
+      console.error('综合评价API调用失败:', error);
+      return null;
     }
   }
 

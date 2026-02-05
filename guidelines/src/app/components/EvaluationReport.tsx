@@ -1,9 +1,13 @@
-import { Download, ArrowLeft, Star, TrendingUp, AlertCircle } from 'lucide-react';
+import { Download, ArrowLeft, Star, TrendingUp, AlertCircle, Award, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import type { OverallEvaluation } from '@/app/services/api';
 
 interface EvaluationReportProps {
   scenarioName: string;
+  overallEvaluation?: OverallEvaluation | null;
+  competencyScores?: Record<string, number>;
+  conversationTurns?: number;
   onStartNew: () => void;
   onBackToScenarios: () => void;
 }
@@ -17,29 +21,7 @@ interface CompetencyScores {
   Systems?: number;
 }
 
-// 静态数据，后续将从API获取
-const staticReportData = {
-  overallScore: 3.8,
-  strengths: [
-    "能够建立良好的咨询关系，来访者表现出一定的开放性",
-    "提问技巧运用得当，能有效引导来访者表达",
-    "对来访者的情绪变化保持敏感，适时给予回应"
-  ],
-  weaknesses: [
-    "在处理来访者防御机制时可以更加耐心，避免过早深入",
-    "可以更多地运用反映性倾听技术，加深情感连接",
-    "需要注意咨询节奏，避免在来访者未准备好时推进过快"
-  ],
-  conversationTurns: 5,
-  competencyScores: {
-    Professionalism: 6.0,
-    Relational: 5.5,
-    Science: 0,
-    Application: 7.0,
-    Education: 0,
-    Systems: 0
-  } as CompetencyScores
-};
+// 六个维度的配置
 
 // 六个维度的配置
 const competencyDimensions = [
@@ -61,16 +43,40 @@ const prepareRadarData = (scores: CompetencyScores) => {
   }));
 };
 
-export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }: EvaluationReportProps) {
-  const radarData = prepareRadarData(staticReportData.competencyScores);
+export function EvaluationReport({
+  scenarioName,
+  overallEvaluation,
+  competencyScores = {},
+  conversationTurns = 0,
+  onStartNew,
+  onBackToScenarios
+}: EvaluationReportProps) {
+  const radarData = prepareRadarData(competencyScores as CompetencyScores);
+
+  // 获取综合得分
+  const overallScore = overallEvaluation?.structured_output?.综合得分 || 0;
+
+  // 获取段位
+  const getRank = (score: number) => {
+    if (score < 4) return '新手上路';
+    if (score <= 7) return '合格咨询师';
+    return '资深专家';
+  };
+
+  // 获取段位颜色
+  const getRankColor = (rank: string) => {
+    if (rank === '新手上路') return 'from-amber-50 to-orange-50 border-amber-200 text-amber-700';
+    if (rank === '合格咨询师') return 'from-blue-50 to-cyan-50 border-blue-200 text-blue-700';
+    return 'from-purple-50 to-pink-50 border-purple-200 text-purple-700';
+  };
 
   const handleExport = () => {
-    // 静态导出示例
+    // 导出数据
     const exportData = {
       scenario: scenarioName,
-      overallScore: staticReportData.overallScore,
-      conversationTurns: staticReportData.conversationTurns,
-      competencyScores: staticReportData.competencyScores,
+      overallScore: overallScore,
+      conversationTurns: conversationTurns,
+      competencyScores: competencyScores,
       conversation: [
         {
           role: "visitor",
@@ -133,32 +139,100 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Overall Score Card */}
-        <div className={`bg-gradient-to-br ${getScoreBgColor(staticReportData.overallScore)} rounded-2xl p-8 border-2 mb-8 shadow-lg`}>
-          <div className="flex items-center justify-between">
+        {/* 🏅 总体评分卡 */}
+        <div className={`bg-gradient-to-br ${getRankColor(getRank(overallScore))} rounded-2xl p-8 border-2 mb-8 shadow-lg`}>
+          <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
-                <Star className="w-8 h-8 text-amber-500" />
-                <h2 className="text-2xl font-bold text-slate-900">综合得分</h2>
+              {/* 标题和段位 */}
+              <div className="flex items-center gap-3 mb-6">
+                <Award className="w-8 h-8" />
+                <div>
+                  <h2 className="text-2xl font-bold">综合得分</h2>
+                  <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mt-1 ${getRankColor(getRank(overallScore))}`}>
+                    {getRank(overallScore)}
+                  </div>
+                </div>
               </div>
-              <div className="flex items-baseline gap-4">
-                <span className={`text-6xl font-bold ${getScoreColor(staticReportData.overallScore)}`}>
-                  {staticReportData.overallScore}
+
+              {/* 大数字分数 */}
+              <div className="flex items-baseline gap-3 mb-6">
+                <span className="text-7xl font-bold">
+                  {overallScore.toFixed(1)}
                 </span>
-                <span className="text-xl text-slate-600">/ 5.0</span>
+                <span className="text-2xl opacity-70">/ 10</span>
               </div>
-              <p className="text-slate-700 mt-4 text-lg">
-                本次练习共完成 <span className="font-semibold">{staticReportData.conversationTurns}</span> 轮对话
+
+              {/* 对话轮次 */}
+              <p className="opacity-80 text-lg">
+                本次练习共完成 <span className="font-semibold">{conversationTurns}</span> 轮对话
               </p>
             </div>
+
+            {/* 导出按钮 */}
             <Button
               onClick={handleExport}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-slate-800 hover:bg-slate-900 text-white"
             >
               <Download className="w-5 h-5 mr-2" />
-              导出对话记录
+              导出报告
             </Button>
+          </div>
+        </div>
+
+        {/* 总体简单点评 */}
+        {overallEvaluation?.natural_language_feedback && (
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-slate-200 mb-8">
+            <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Star className="w-6 h-6 text-amber-500" />
+              总体评价
+            </h3>
+            <p className="text-slate-700 leading-relaxed text-lg">
+              {overallEvaluation.natural_language_feedback}
+            </p>
+          </div>
+        )}
+
+        {/* 稳定优势和结构性短板 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+          {/* 稳定优势 */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 shadow-md border border-green-200">
+            <div className="flex items-center gap-3 mb-4">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <h3 className="text-xl font-bold text-green-900">稳定优势</h3>
+            </div>
+            <ul className="space-y-3">
+              {overallEvaluation?.structured_output?.稳定优势?.slice(0, 3).map((strength, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-200 text-green-700 flex items-center justify-center text-sm font-semibold mt-0.5">
+                    {index + 1}
+                  </span>
+                  <p className="text-green-800 leading-relaxed">{strength}</p>
+                </li>
+              )) || (
+                <li className="text-green-700 italic">暂无数据</li>
+              )}
+            </ul>
+          </div>
+
+          {/* 结构性短板 */}
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 shadow-md border border-amber-200">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertCircle className="w-6 h-6 text-amber-600" />
+              <h3 className="text-xl font-bold text-amber-900">结构性短板</h3>
+            </div>
+            <ul className="space-y-3">
+              {overallEvaluation?.structured_output?.结构性短板?.slice(0, 3).map((weakness, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-sm font-semibold mt-0.5">
+                    {index + 1}
+                  </span>
+                  <p className="text-amber-800 leading-relaxed">{weakness}</p>
+                </li>
+              )) || (
+                <li className="text-amber-700 italic">暂无数据</li>
+              )}
+            </ul>
           </div>
         </div>
 
@@ -198,7 +272,7 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
               <h3 className="text-lg font-semibold text-slate-900 mb-4">维度得分</h3>
               <div className="space-y-3">
                 {competencyDimensions.map((dim) => {
-                  const score = staticReportData.competencyScores[dim.key as keyof CompetencyScores] || 0;
+                  const score = (competencyScores as CompetencyScores)[dim.key as keyof CompetencyScores] || 0;
                   return (
                     <div key={dim.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                       <div className="flex items-center gap-3">
@@ -222,54 +296,13 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Strengths */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900">主要优点</h3>
-            </div>
-            <ul className="space-y-4">
-              {staticReportData.strengths.map((strength, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-semibold mt-0.5">
-                    {index + 1}
-                  </span>
-                  <p className="text-slate-700 leading-relaxed">{strength}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Weaknesses */}
-          <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-slate-900">主要不足</h3>
-            </div>
-            <ul className="space-y-4">
-              {staticReportData.weaknesses.map((weakness, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm font-semibold mt-0.5">
-                    {index + 1}
-                  </span>
-                  <p className="text-slate-700 leading-relaxed">{weakness}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 mt-12">
           <Button
             onClick={onStartNew}
             size="lg"
-            className="bg-blue-600 hover:bg-blue-700 px-8"
+            className="hover:opacity-90 px-8"
+            style={{ backgroundColor: '#7BC0CD' }}
           >
             开始新的练习
           </Button>
@@ -277,7 +310,7 @@ export function EvaluationReport({ scenarioName, onStartNew, onBackToScenarios }
             onClick={onBackToScenarios}
             variant="outline"
             size="lg"
-            className="px-8"
+            className="px-8 border-slate-300 text-slate-700 hover:bg-slate-50"
           >
             选择其他场景
           </Button>
