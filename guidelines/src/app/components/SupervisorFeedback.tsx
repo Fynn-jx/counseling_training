@@ -11,12 +11,12 @@ interface SupervisorFeedbackProps {
 }
 
 export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
-  // 为每个评价跟踪展开/折叠状态 - 默认展开最新的一轮（index === 0）
+  // 为每个评价跟踪详情展开/折叠状态 - 默认展开最新的一轮
   const [expandedFeedbacks, setExpandedFeedbacks] = useState<Set<number>>(
     new Set(evaluations.length > 0 ? [evaluations[0].turn] : [])
   );
 
-  // 切换某轮的展开状态
+  // 切换某轮的详情展开状态
   const toggleFeedback = (turn: number) => {
     setExpandedFeedbacks(prev => {
       const newSet = new Set(prev);
@@ -38,7 +38,7 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
     setExpandedFeedbacks(new Set(evaluations.length > 0 ? [evaluations[0].turn] : []));
   };
 
-  // 当 evaluations 更新时，确保最新一轮始终展开
+  // 当 evaluations 更新时，确保最新一轮的详情始终展开
   useEffect(() => {
     if (evaluations.length > 0) {
       setExpandedFeedbacks(prev => {
@@ -114,48 +114,57 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
 
               return (
                 <div key={evaluation.turn} className="border border-slate-200 rounded-lg overflow-hidden">
-                  {/* 轮次标题栏（可点击展开/折叠） */}
-                  <button
-                    onClick={() => toggleFeedback(evaluation.turn)}
-                    className={`w-full flex items-center justify-between p-3 transition-colors ${
-                      isLatest ? 'bg-blue-50 hover:bg-blue-100' : 'bg-slate-50 hover:bg-slate-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-slate-500" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
-                      )}
-                      <span className={`text-sm font-medium ${isLatest ? 'text-blue-700' : 'text-slate-700'}`}>
-                        第 {evaluation.turn} 轮
-                      </span>
-                      {isLatest && (
-                        <span className="text-xs px-1.5 py-0.5 bg-blue-500 text-white rounded">
-                          当前
+                  {/* 轮次标题栏（始终显示） */}
+                  <div className={`p-3 ${isLatest ? 'bg-blue-50' : 'bg-slate-50'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-medium ${isLatest ? 'text-blue-700' : 'text-slate-700'}`}>
+                          第 {evaluation.turn} 轮
                         </span>
-                      )}
+                        {isLatest && (
+                          <span className="text-xs px-1.5 py-0.5 bg-blue-500 text-white rounded">
+                            当前
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-sm font-bold ${getScoreClass(evaluation.综合得分)}`}>
+                        {evaluation.综合得分.toFixed(1)}
+                      </span>
                     </div>
-                    <span className={`text-sm font-bold ${getScoreClass(evaluation.综合得分)}`}>
-                      {evaluation.综合得分.toFixed(1)}
-                    </span>
-                  </button>
 
-                  {/* 展开的内容 */}
+                    {/* 自然语言反馈 - 始终显示，不需要点击展开 */}
+                    {evaluation.natural_language_feedback && (
+                      <div className="text-sm text-slate-700 leading-relaxed">
+                        {evaluation.natural_language_feedback}
+                      </div>
+                    )}
+
+                    {/* 展开/折叠详情按钮 */}
+                    <button
+                      onClick={() => toggleFeedback(evaluation.turn)}
+                      className="mt-2 flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronDown className="w-3 h-3" />
+                          收起详情
+                        </>
+                      ) : (
+                        <>
+                          <ChevronRight className="w-3 h-3" />
+                          查看详情
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* 详情内容（可折叠） */}
                   {isExpanded && (
                     <div className={`p-4 bg-gradient-to-br ${getScoreBgClass(evaluation.综合得分)} border-t`}>
-                      {/* Natural Language Feedback */}
-                      {evaluation.natural_language_feedback && (
-                        <div className="mb-4">
-                          <p className="text-sm text-slate-700 leading-relaxed">
-                            {evaluation.natural_language_feedback}
-                          </p>
-                        </div>
-                      )}
-
                       {/* Summary */}
                       {evaluation.总体评价 && (
                         <div className="mb-4">
+                          <p className="text-xs text-slate-500 mb-1">总体评价</p>
                           <p className="text-sm text-slate-700 leading-relaxed">
                             {evaluation.总体评价}
                           </p>
