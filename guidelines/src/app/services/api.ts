@@ -459,24 +459,28 @@ export class DifyApiService {
   }
 
   async callSupervisorAgent(message: string, conversationHistory: Array<{ sender: string; content: string }>, chartData: ChartData | null): Promise<SupervisorResponse> {
-    // 简化请求内容，只发送当前轮消息
-    // Dify 的 conversation 功能会自动保存历史
-    let queryText = `【咨询师本轮回复】\n${message}\n`;
-
-    // 只传递最新的图表数据摘要（不是完整历史）
-    if (chartData) {
-      // 只取最后一个数据点
-      const latestEmotion = chartData.session_emotion_timeline?.[chartData.session_emotion_timeline.length - 1];
-      const latestStress = chartData.stress_curve?.[chartData.stress_curve.length - 1];
-      const latestStage = chartData.conversation_stage_curve?.[chartData.conversation_stage_curve.length - 1];
-
-      if (latestEmotion || latestStress || latestStage) {
-        queryText += `\n【当前状态】\n`;
-        if (latestEmotion) queryText += `情绪: ${latestEmotion.label}\n`;
-        if (latestStress) queryText += `压力: ${latestStress.value}\n`;
-        if (latestStage) queryText += `阶段: ${latestStage.stage}\n`;
-      }
+    // 构建包含历史记录的完整 prompt
+    let queryText = "";
+    
+    // 1. 添加对话历史
+    if (conversationHistory.length > 0) {
+      queryText += "【对话历史】\n";
+      conversationHistory.forEach(msg => {
+        queryText += `${msg.sender}: ${msg.content}\n`;
+      });
+      queryText += "\n";
     }
+
+    // 2. 添加咨询师本轮回复
+    queryText += `【咨询师本轮回复】\n${message}\n`;
+
+    // 3. 添加结构化数据（包含历史状态）
+    if (chartData) {
+      queryText += `\n【结构化数据】\n`;
+      queryText += JSON.stringify(chartData, null, 2);
+    }
+    
+    console.log('发送给督导的完整Prompt:', queryText);
 
     const response = await this.callDifyAPI(API_CONFIG.supervisor, queryText, this.supervisorConversationId);
 

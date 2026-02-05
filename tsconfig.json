@@ -16,5 +16,5 @@
       "@/*": ["./guidelines/src/*"]
     }
   },
-  "include": ["guidelines/src"]
+  "include": ["guidelines/src", "vite-env.d.ts"]
 }
