@@ -524,21 +524,73 @@ export class DifyApiService {
           }
         }
 
-        // 2. 处理本轮评价 (reply)
+        // 2. 处理本轮评价 (reply) - 支持混合格式
         if (obj.reply) {
-          const extractedJson = this.extractJsonFromMarkdown(obj.reply);
-          if (extractedJson) {
-            try {
-              const parsed = JSON.parse(extractedJson);
-              if (parsed.structured_output) {
-                evaluationData = {
-                  ...parsed.structured_output,
-                  natural_language_feedback: parsed.natural_language_feedback
-                } as SupervisorEvaluation;
-                console.log('从reply提取到督导数据:', evaluationData);
+          const replyText = obj.reply;
+          console.log('处理reply字段:', replyText.substring(0, 100) + '...');
+
+          // 尝试直接解析整个reply为JSON
+          try {
+            const parsed = JSON.parse(replyText);
+            if (parsed.structured_output) {
+              evaluationData = {
+                ...parsed.structured_output,
+                natural_language_feedback: parsed.natural_language_feedback
+              } as SupervisorEvaluation;
+              console.log('从reply直接解析到督导数据:', evaluationData);
+            }
+          } catch (e) {
+            // reply不是纯JSON，尝试提取其中的JSON部分
+            // 格式可能是: "1. 自然语言反馈：xxx\n\n2. 结构化输出：\n{...}"
+
+            // 提取结构化输出部分
+            const structuredOutputMatch = replyText.match(/(?:结构化输出|2\. 结构化输出)[：:]\s*\n*((?:\n?\{[\s\S]*?\})|(?:```json\s*([\s\S]*?)```))/);
+            if (structuredOutputMatch) {
+              try {
+                const jsonContent = structuredOutputMatch[1] || structuredOutputMatch[2];
+                const parsed = JSON.parse(jsonContent);
+                if (parsed.综合得分 !== undefined) {
+                  evaluationData = {
+                    综合得分: parsed.综合得分,
+                    总体评价: parsed.总体评价 || '',
+                    建议: parsed.建议 || '',
+                    跳步判断: parsed.跳步判断 || {
+                      是否跳步: false,
+                      跳步类型: "无",
+                      督导建议: "无跳步问题"
+                    }
+                  };
+
+                  // 提取自然语言反馈部分
+                  const feedbackMatch = replyText.match(/(?:自然语言反馈|1\. 自然语言反馈)[：:]\s*\n*(.*?)(?=\n\n2\.|结构化输出|$)/s);
+                  if (feedbackMatch) {
+                    evaluationData.natural_language_feedback = feedbackMatch[1].trim();
+                  }
+
+                  console.log('从reply提取到督导数据:', evaluationData);
+                }
+              } catch (e) {
+                console.log('解析reply中的structured_output失败:', e);
               }
-            } catch (e) {
-              console.log('解析reply失败:', e);
+            }
+
+            // 如果还是没解析出来，尝试旧方式
+            if (!evaluationData) {
+              const extractedJson = this.extractJsonFromMarkdown(replyText);
+              if (extractedJson) {
+                try {
+                  const parsed = JSON.parse(extractedJson);
+                  if (parsed.structured_output) {
+                    evaluationData = {
+                      ...parsed.structured_output,
+                      natural_language_feedback: parsed.natural_language_feedback
+                    } as SupervisorEvaluation;
+                    console.log('从reply提取到督导数据:', evaluationData);
+                  }
+                } catch (e2) {
+                  console.log('解析reply失败:', e2);
+                }
+              }
             }
           }
         }

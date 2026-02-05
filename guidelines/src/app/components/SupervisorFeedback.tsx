@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SupervisorEvaluation } from '@/app/services/api';
 
@@ -11,7 +11,7 @@ interface SupervisorFeedbackProps {
 }
 
 export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
-  // 为每个评价跟踪展开/折叠状态 - 默认只展开最新的一轮
+  // 为每个评价跟踪展开/折叠状态 - 默认展开最新的一轮（index === 0）
   const [expandedFeedbacks, setExpandedFeedbacks] = useState<Set<number>>(
     new Set(evaluations.length > 0 ? [evaluations[0].turn] : [])
   );
@@ -37,6 +37,20 @@ export function SupervisorFeedback({ evaluations }: SupervisorFeedbackProps) {
   const collapseAll = () => {
     setExpandedFeedbacks(new Set(evaluations.length > 0 ? [evaluations[0].turn] : []));
   };
+
+  // 当 evaluations 更新时，确保最新一轮始终展开
+  useEffect(() => {
+    if (evaluations.length > 0) {
+      setExpandedFeedbacks(prev => {
+        // 如果当前展开集合为空（可能是初始化状态），则展开最新一轮
+        if (prev.size === 0) {
+          return new Set([evaluations[0].turn]);
+        }
+        // 否则保持当前状态
+        return prev;
+      });
+    }
+  }, [evaluations]);
 
   const getScoreClass = (score: number) => {
     if (score >= 4) return 'text-green-600';
