@@ -131,44 +131,22 @@ function KeyMomentsAnalysis({ sessionTurnRecords }: { sessionTurnRecords: Sessio
   const bestMoment = sortedByScore[0];
   const worstMoment = sortedByScore[sortedByScore.length - 1];
 
-  // 提取表扬部分 - 改进版
-  const extractPraise = (feedback: string) => {
-    if (!feedback) return '表现良好';
-    // 清理反馈中的换行符和多余空格
-    const cleanFeedback = feedback.replace(/\n+/g, ' ').trim();
-
-    // 尝试找到分割点：关键词 "建议"、"改进"
-    const splitPatterns = ['建议', '改进', '提升', '督导建议'];
-    let splitIndex = -1;
-
-    for (const pattern of splitPatterns) {
-      const index = cleanFeedback.indexOf(pattern);
-      if (index > 0) {
-        splitIndex = index;
-        break;
-      }
+  // 提取建议部分 - 统一处理
+  const extractSuggestion = (evaluation: any) => {
+    // 优先使用结构化输出中的建议
+    if (evaluation.evaluation?.建议) {
+      return evaluation.evaluation.建议;
     }
+    // 如果没有结构化建议，从反馈中提取
+    const feedback = evaluation.feedback || evaluation.evaluation?.natural_language_feedback || '';
+    if (!feedback) return '暂无建议';
 
-    if (splitIndex > 0) {
-      return cleanFeedback.substring(0, splitIndex).trim();
-    }
-
-    // 如果找不到明确的分割点，返回前70%作为表扬
-    if (cleanFeedback.length > 100) {
-      return cleanFeedback.substring(0, Math.floor(cleanFeedback.length * 0.7)).trim() + '...';
-    }
-    return cleanFeedback;
-  };
-
-  // 提取建议部分 - 改进版，确保完整提取
-  const extractSuggestion = (feedback: string) => {
-    if (!feedback) return '继续努力';
-    // 保留原始格式，只清理首尾空格
+    // 保留原始格式
     const cleanFeedback = feedback.trim();
 
-    // 尝试找到"建议"等关键词及其后面的完整内容
+    // 尝试找到"建议"关键词后的内容
     const suggestionPatterns = [
-      /建议[：:]\s*([\s\S]+)/,  // 匹配到结尾
+      /建议[：:]\s*([\s\S]+)/,
       /督导建议[：:]\s*([\s\S]+)/,
       /改进建议[：:]\s*([\s\S]+)/
     ];
@@ -176,30 +154,24 @@ function KeyMomentsAnalysis({ sessionTurnRecords }: { sessionTurnRecords: Sessio
     for (const pattern of suggestionPatterns) {
       const match = cleanFeedback.match(pattern);
       if (match && match[1]) {
-        return match[1].trim();  // 返回完整内容，不截断
+        return match[1].trim();
       }
     }
 
-    // 如果找不到明确的格式，尝试简单查找
+    // 如果找不到明确格式，尝试查找关键词
     const keywordIndex = cleanFeedback.search(/建议|改进|提升/);
     if (keywordIndex >= 0) {
-      // 找到关键词的位置，向前查找是否有冒号
-      const fromStart = cleanFeedback.substring(keywordIndex - 2, keywordIndex);
-      if (fromStart.includes('：') || fromStart.includes(':')) {
-        // 有冒号，从冒号后开始
-        const colonIndex = Math.max(
-          cleanFeedback.lastIndexOf('：', keywordIndex),
-          cleanFeedback.lastIndexOf(':', keywordIndex)
-        );
-        if (colonIndex >= 0) {
-          return cleanFeedback.substring(colonIndex + 1).trim();
-        }
+      const colonIndex = Math.max(
+        cleanFeedback.lastIndexOf('：', keywordIndex),
+        cleanFeedback.lastIndexOf(':', keywordIndex)
+      );
+      if (colonIndex >= 0) {
+        return cleanFeedback.substring(colonIndex + 1).trim();
       }
-      // 没有冒号，直接从关键词开始
       return cleanFeedback.substring(keywordIndex).trim();
     }
 
-    // 如果还是找不到，返回完整的原始反馈
+    // 如果还是找不到，返回完整反馈
     return cleanFeedback;
   };
 
@@ -230,9 +202,9 @@ function KeyMomentsAnalysis({ sessionTurnRecords }: { sessionTurnRecords: Sessio
             </div>
 
             <div>
-              <p className="text-xs text-slate-500 mb-1">督导反馈</p>
-              <p className="text-sm text-slate-700 leading-relaxed">
-                {extractPraise(bestMoment.feedback)}
+              <p className="text-xs text-slate-500 mb-1">督导建议</p>
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                {extractSuggestion(bestMoment)}
               </p>
             </div>
           </div>
@@ -258,8 +230,8 @@ function KeyMomentsAnalysis({ sessionTurnRecords }: { sessionTurnRecords: Sessio
 
             <div>
               <p className="text-xs text-slate-500 mb-1">督导建议</p>
-              <p className="text-sm text-slate-700 leading-relaxed">
-                {extractSuggestion(worstMoment.feedback)}
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                {extractSuggestion(worstMoment)}
               </p>
             </div>
           </div>
@@ -534,19 +506,19 @@ export function EvaluationReport({
       timestamp: msg.timestamp
     }));
 
-    // 构建每轮的完整记录（来访-咨询师-督导）
-    const fullTurnRecords = sessionTurnRecords.map((record, index) => {
-      const visitorMsg = record.visitorMessage;
-      const counselorMsg = record.counselorMessage;
-      const supervisorFeedback = record.feedback;
-      const score = record.score;
-
+    // 构建每轮的完整记录（来访-咨询师-督导完整评价）
+    const fullTurnRecords = sessionTurnRecords.map((record) => {
       return {
         轮次: record.turn,
-        来访者发言: visitorMsg,
-        咨询师回复: counselorMsg,
-        督导评分: score,
-        督导反馈: supervisorFeedback
+        来访者发言: record.visitorMessage,
+        咨询师回复: record.counselorMessage,
+        督导评价: {
+          综合得分: record.score,
+          总体评价: record.evaluation?.总体评价 || '',
+          建议: record.evaluation?.建议 || '',
+          跳步判断: record.evaluation?.跳步判断 || null,
+          自然语言反馈: record.feedback || ''
+        }
       };
     });
 
