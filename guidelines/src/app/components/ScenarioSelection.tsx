@@ -1,4 +1,4 @@
-import { MessageSquare, User, Heart, Users, HelpCircle, Baby, Brain, Sparkles, Zap, AlertCircle, Clock, TrendingUp } from 'lucide-react';
+import { MessageSquare, User, Heart, Users, HelpCircle, Baby, Brain, Sparkles, Zap, AlertCircle, Clock, TrendingUp, BarChart3 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 
 interface VisitorProfile {
@@ -114,9 +114,10 @@ const scenarios: Scenario[] = [
 interface ScenarioSelectionProps {
   onSelectScenario: (scenario: Scenario) => void;
   onLogout: () => void;
+  onViewProgress?: () => void;
 }
 
-export function ScenarioSelection({ onSelectScenario, onLogout }: ScenarioSelectionProps) {
+export function ScenarioSelection({ onSelectScenario, onLogout, onViewProgress }: ScenarioSelectionProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -130,13 +131,25 @@ export function ScenarioSelection({ onSelectScenario, onLogout }: ScenarioSelect
               请选择一个场景开始您的培训评测
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={onLogout}
-            className="border-slate-200 hover:bg-slate-50"
-          >
-            退出登录
-          </Button>
+          <div className="flex gap-2">
+            {onViewProgress && (
+              <Button
+                variant="outline"
+                onClick={onViewProgress}
+                className="border-slate-200 hover:bg-slate-50"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                查看进步分析
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              onClick={onLogout}
+              className="border-slate-200 hover:bg-slate-50"
+            >
+              退出登录
+            </Button>
+          </div>
         </div>
 
         {/* Scenario Grid */}

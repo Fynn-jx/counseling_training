@@ -159,7 +159,7 @@ export class DifyApiService {
     // 每次调用时动态获取最新配置
     const config = getApiConfig()[configType];
 
-    const requestBody: ChatMessage = {
+    const difyPayload: ChatMessage = {
       inputs: {},
       query: message,
       response_mode: 'blocking',
@@ -167,28 +167,31 @@ export class DifyApiService {
       user: 'counselor_user'
     };
 
-    // 使用本地代理 API 来解决 CORS 问题
-    const isProduction = import.meta.env.MODE === 'production';
-    const apiUrl = isProduction ? '/api/dify' : '/api/dify';
+    // 统一使用代理方式（开发环境用 Vite 代理，生产环境用 Vercel 代理）
+    const requestUrl = '/api/dify';
+    const fetchBody = {
+      apiUrl: config.url,
+      apiKey: config.key,
+      payload: difyPayload
+    };
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), actualTimeoutMs);
 
-        console.log(`API调用 (尝试 ${attempt + 1}/${retries + 1}):`, { apiUrl: config.url, message: message.substring(0, 50) + '...' });
+        console.log(`API调用 (尝试 ${attempt + 1}/${retries + 1}):`, {
+          targetUrl: config.url,
+          message: message.substring(0, 50) + '...'
+        });
 
-        const response = await fetch(apiUrl, {
+        const response = await fetch(requestUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           signal: controller.signal,
-          body: JSON.stringify({
-            apiUrl: config.url,
-            apiKey: config.key,
-            payload: requestBody
-          })
+          body: JSON.stringify(fetchBody)
         });
 
         clearTimeout(timeoutId);
