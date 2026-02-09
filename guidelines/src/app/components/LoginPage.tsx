@@ -24,13 +24,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      // 检查 Supabase 是否已配置
-      if (!supabase) {
-        setError('系统未配置数据库，请联系技术支持');
-        setIsLoading(false);
-        return;
-      }
-
       // 使用 Supabase 认证
       if (isRegisterMode) {
         // 注册
@@ -91,19 +84,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               {isRegisterMode ? '注册账号' : '登录以开始您的培训评测'}
             </p>
           </div>
-
-          {/* 提示信息 - 只在未配置 Supabase 时显示 */}
-          {!supabase && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-red-800">
-                  <p className="font-semibold mb-1">系统未配置数据库</p>
-                  <p className="text-red-700">请联系技术支持配置 Supabase 数据库。</p>
-                </div>
-              </div>
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">

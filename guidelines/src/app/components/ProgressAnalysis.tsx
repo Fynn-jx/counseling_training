@@ -45,7 +45,6 @@ export function ProgressAnalysis({ userId, onBack }: ProgressAnalysisProps) {
   const [sessions, setSessions] = useState<PracticeSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSession, setSelectedSession] = useState<PracticeSession | null>(null);
-  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState(true);
 
   useEffect(() => {
     loadSessions();
@@ -53,13 +52,6 @@ export function ProgressAnalysis({ userId, onBack }: ProgressAnalysisProps) {
 
   const loadSessions = async () => {
     try {
-      if (!supabase) {
-        console.warn('Supabase 未配置，无法加载练习记录');
-        setIsSupabaseConfigured(false);
-        setIsLoading(false);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('practice_sessions')
         .select('*')
@@ -111,25 +103,6 @@ export function ProgressAnalysis({ userId, onBack }: ProgressAnalysisProps) {
         <div className="text-center">
           <Activity className="w-16 h-16 mx-auto mb-4 text-slate-300 animate-pulse" />
           <p className="text-slate-500">加载中...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isSupabaseConfigured) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: colors.bg }}>
-        <div className="bg-white rounded-xl p-12 text-center max-w-md shadow-sm border border-slate-200">
-          <AlertCircle className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">暂无历史记录</h2>
-          <p className="text-slate-500 mb-6">完成练习后，这里将显示您的进步分析和历史数据。</p>
-          <Button
-            onClick={onBack}
-            className="text-white hover:opacity-90"
-            style={{ backgroundColor: colors.primary }}
-          >
-            开始练习
-          </Button>
         </div>
       </div>
     );

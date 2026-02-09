@@ -78,7 +78,7 @@ export default function App() {
     if (messages) (window as any).sessionMessages = messages;
 
     // 保存到数据库
-    if (userId && selectedScenario && scores && supabase) {
+    if (userId && selectedScenario && scores) {
       try {
         // 如果有综合评价使用综合得分，否则计算胜任力平均分
         const scoreValues = Object.values(scores).filter(v => v !== undefined && v !== null);
@@ -131,8 +131,6 @@ export default function App() {
       } catch (error) {
         console.error('保存数据时出错:', error);
       }
-    } else if (!supabase) {
-      console.log('Supabase 未配置，跳过数据库保存');
     }
 
     setAppState('report');

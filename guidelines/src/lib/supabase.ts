@@ -1,16 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// 优先使用环境变量，如果没有则使用默认配置
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://hnlvsrfginhrvrmrrtbd.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_7LkSAJSi4r2Nb1rFwtTALQ_HEmvvZdv';
 
-// 只在有配置时创建 Supabase client
-export const supabase = (supabaseUrl && supabaseAnonKey)
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
-
-if (!supabase) {
-  console.warn('Supabase 配置缺失，数据库功能将不可用（将使用模拟模式）');
-}
+// 创建 Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // 数据库类型定义
 export interface Database {
